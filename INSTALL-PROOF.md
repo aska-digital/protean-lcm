@@ -32,11 +32,11 @@ point, and the discovery path are identical to the git URL form.
 $ pip wheel --no-deps -w "$DIST" .
 Successfully built protean-lcm
 
-$ ls -l "$DIST"
-protean_lcm-0.1.0-py3-none-any.whl  35356 bytes
+$ ls "$DIST"
+protean_lcm-0.1.0-py3-none-any.whl     # 35409 bytes; wheel bytes shift with the embedded build timestamp
 
 $ pip install --no-deps --target "$SITE" "$DIST"/protean_lcm-0.1.0-py3-none-any.whl
-installed
+ok
 
 $ ls "$SITE"
 protean_lcm
@@ -110,13 +110,14 @@ it came from the installed package rather than from a source tree.
 
 ```
 $ sh scripts/run_tests.sh "$HERMES_CHECKOUT" -q
-56 passed, 3 warnings in 1.79s
+56 passed, 4 warnings in 2.07s
 ```
 
 The suite runs against the real context-engine loader of the Hermes checkout passed to the script.
 Its scope is `tests/plugins/context_engine/`; the unpackaged slices' suites are not covered by this
 command. The warnings come from the host checkout's own plugin-compat notices (the Sep 2026
-`run_agent.*` import move), not from this plugin, and their count varies between runs.
+`run_agent.*` import move), not from this plugin, and their count moves between runs (3 or 4 on this
+host).
 
 ```
 $ "$PY" "$HERMES_CHECKOUT/hermes" plugins validate plugins/context_engine/lcm
