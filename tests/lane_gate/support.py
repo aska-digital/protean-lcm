@@ -28,8 +28,22 @@ FORBIDDEN_TOOLS: List[str] = ["delegate_task", "kanban_create"]
 
 ENV_VARS = ("PROTEAN_LANE_MANIFEST", "PROTEAN_LANE_RECEIPTS", "PROTEAN_LANE_RECEIPT_DETAIL")
 
-#: Base commit of the slice (lock §6).  The allowlist test diffs against it.
+#: Base commit of the slice (lock §6).  Linear feature branches diff against it.
 BASE_COMMIT = "9d3c4cb8dd7c58670ea9525b08391390ca8c0521"
+
+
+def ownership_diff_range(parent_line: str, *, base: str = BASE_COMMIT) -> str:
+    """Return the range containing this lane's changes.
+
+    A merged default branch has unrelated files in its first parent.  For a
+    merge commit, the second-parent delta is the lane-owned boundary; using the
+    old feature-base commit would incorrectly re-count the first parent's
+    history.  Linear feature branches retain the locked slice base.
+    """
+    parents = parent_line.split()
+    if len(parents) >= 3:
+        return f"{parents[1]}..HEAD"
+    return f"{base}..HEAD"
 
 #: Lock §3.0 owned file set, as fnmatch patterns over repository-relative paths.
 ALLOWED_CHANGED_PATTERNS: List[str] = [

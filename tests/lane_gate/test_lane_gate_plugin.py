@@ -27,6 +27,7 @@ from support import (
     generated_artifacts_are_disjoint_from_owned,
     is_allowed_change,
     is_generated_path,
+    ownership_diff_range,
     valid_manifest,
 )
 
@@ -211,18 +212,36 @@ def test_env_binding_overrides_config(monkeypatch, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
+def test_ownership_range_uses_merge_parent_for_merged_main():
+    """A merge checks only the lane delta, not files already on main."""
+    assert ownership_diff_range("merge main-parent lane-parent") == "main-parent..HEAD"
+
+
+def test_ownership_range_keeps_linear_feature_base():
+    """A true lane branch still checks from the locked feature base."""
+    assert ownership_diff_range("linear-head") == f"{BASE_COMMIT}..HEAD"
+
+
+def test_ownership_allowlist_rejects_real_boundary_violation():
+    """The merge-baseline repair must not weaken the owned-file invariant."""
+    assert not is_allowed_change("README.md")
+    assert not is_allowed_change("plugins/context_engine/lcm/engine.py")
+
+
 def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
     """The branch touches only its owned files, and disable/re-enable restores stock behaviour."""
     # --- diff allowlist (lock §3.0 / §6) -----------------------------------
     changed = set()
+    parent_line = _git("rev-list", "--parents", "-n", "1", "HEAD").strip()
+    diff_range = ownership_diff_range(parent_line)
     base_resolves = subprocess.run(
         ["git", "cat-file", "-e", f"{BASE_COMMIT}^{{commit}}"],
         cwd=str(REPO_ROOT),
         capture_output=True,
         check=False,
     ).returncode == 0
-    if base_resolves:
-        changed.update(line.strip() for line in _git("diff", "--name-only", f"{BASE_COMMIT}..HEAD").splitlines() if line.strip())
+    if base_resolves or diff_range != f"{BASE_COMMIT}..HEAD":
+        changed.update(line.strip() for line in _git("diff", "--name-only", diff_range).splitlines() if line.strip())
     for line in _git("status", "--porcelain").splitlines():
         if not line.strip():
             continue
