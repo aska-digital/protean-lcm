@@ -32,17 +32,24 @@ ENV_VARS = ("PROTEAN_LANE_MANIFEST", "PROTEAN_LANE_RECEIPTS", "PROTEAN_LANE_RECE
 BASE_COMMIT = "9d3c4cb8dd7c58670ea9525b08391390ca8c0521"
 
 
-def ownership_diff_range(parent_line: str, *, base: str = BASE_COMMIT) -> str:
+def ownership_diff_range(
+    parent_line: str,
+    *,
+    base: str = BASE_COMMIT,
+    upstream: Optional[str] = None,
+) -> str:
     """Return the range containing this lane's changes.
 
-    A merged default branch has unrelated files in its first parent.  For a
-    merge commit, the second-parent delta is the lane-owned boundary; using the
-    old feature-base commit would incorrectly re-count the first parent's
-    history.  Linear feature branches retain the locked slice base.
+    A merge commit's first-parent delta is the lane-owned boundary.  A linear
+    PR branch uses the live default-branch ref when available, so unrelated
+    files that were already on main are not re-counted.  The locked feature
+    base remains the fallback for an isolated feature checkout.
     """
     parents = parent_line.split()
     if len(parents) >= 3:
         return f"{parents[1]}..HEAD"
+    if upstream:
+        return f"{upstream}..HEAD"
     return f"{base}..HEAD"
 
 #: Lock §3.0 owned file set, as fnmatch patterns over repository-relative paths.
