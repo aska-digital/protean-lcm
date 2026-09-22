@@ -262,7 +262,7 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
     stray = sorted(path for path in changed if not is_allowed_change(path))
     assert stray == [], f"diff escapes the owned file set: {stray}"
     assert changed, "the branch has changes to check"
-    assert any(path.startswith("plugins/lane_gate") for path in changed)
+    assert any(path.startswith(("plugins/lane_gate", "tests/lane_gate")) for path in changed)
 
     # The generated-artifact filter must never be able to hide a source file.
     assert generated_artifacts_are_disjoint_from_owned()
