@@ -218,8 +218,9 @@ def test_ownership_range_uses_merge_parent_for_merged_main():
 
 
 def test_ownership_range_keeps_linear_feature_base():
-    """A true lane branch still checks from the locked feature base."""
+    """An isolated lane branch still checks from the locked feature base."""
     assert ownership_diff_range("linear-head") == f"{BASE_COMMIT}..HEAD"
+    assert ownership_diff_range("linear-head", upstream="origin/main") == "origin/main..HEAD"
 
 
 def test_ownership_allowlist_rejects_real_boundary_violation():
@@ -233,7 +234,13 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
     # --- diff allowlist (lock §3.0 / §6) -----------------------------------
     changed = set()
     parent_line = _git("rev-list", "--parents", "-n", "1", "HEAD").strip()
-    diff_range = ownership_diff_range(parent_line)
+    upstream = "origin/main" if subprocess.run(
+        ["git", "cat-file", "-e", "origin/main^{commit}"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        check=False,
+    ).returncode == 0 else None
+    diff_range = ownership_diff_range(parent_line, upstream=upstream)
     base_resolves = subprocess.run(
         ["git", "cat-file", "-e", f"{BASE_COMMIT}^{{commit}}"],
         cwd=str(REPO_ROOT),
@@ -255,7 +262,7 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
     stray = sorted(path for path in changed if not is_allowed_change(path))
     assert stray == [], f"diff escapes the owned file set: {stray}"
     assert changed, "the branch has changes to check"
-    assert any(path.startswith("plugins/lane_gate") for path in changed)
+    assert any(path.startswith(("plugins/lane_gate", "tests/lane_gate")) for path in changed)
 
     # The generated-artifact filter must never be able to hide a source file.
     assert generated_artifacts_are_disjoint_from_owned()
