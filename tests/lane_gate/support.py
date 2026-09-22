@@ -37,19 +37,25 @@ def ownership_diff_range(
     *,
     base: str = BASE_COMMIT,
     upstream: Optional[str] = None,
-) -> str:
+    branch: Optional[str] = None,
+    default_branch: str = "main",
+) -> Optional[str]:
     """Return the range containing this lane's changes.
 
-    A merge commit's first-parent delta is the lane-owned boundary.  A linear
-    PR branch uses the live default-branch ref when available, so unrelated
-    files that were already on main are not re-counted.  The locked feature
-    base remains the fallback for an isolated feature checkout.
+    Ownership is a feature-branch invariant.  The default branch is an
+    integration result, so its merge history is not treated as a Lane Gate
+    change set.  A linear feature branch uses the live default-branch ref when
+    available; the locked feature base remains the fallback for an isolated
+    checkout.  A merge commit on a feature branch is scoped to its first-parent
+    delta.
     """
+    if branch == default_branch:
+        return None
+    if upstream:
+        return f"{upstream}..HEAD"
     parents = parent_line.split()
     if len(parents) >= 3:
         return f"{parents[1]}..HEAD"
-    if upstream:
-        return f"{upstream}..HEAD"
     return f"{base}..HEAD"
 
 #: Lock §3.0 owned file set, as fnmatch patterns over repository-relative paths.

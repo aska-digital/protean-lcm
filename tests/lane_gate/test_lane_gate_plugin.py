@@ -213,14 +213,26 @@ def test_env_binding_overrides_config(monkeypatch, tmp_path):
 
 
 def test_ownership_range_uses_merge_parent_for_merged_main():
-    """A merge checks only the lane delta, not files already on main."""
-    assert ownership_diff_range("merge main-parent lane-parent") == "main-parent..HEAD"
+    """The default branch accepts unrelated sibling integration history."""
+    assert ownership_diff_range("merge main-parent lane-parent", branch="main") is None
 
 
 def test_ownership_range_keeps_linear_feature_base():
-    """An isolated lane branch still checks from the locked feature base."""
-    assert ownership_diff_range("linear-head") == f"{BASE_COMMIT}..HEAD"
-    assert ownership_diff_range("linear-head", upstream="origin/main") == "origin/main..HEAD"
+    """A feature branch uses main, then the locked base in an isolated checkout."""
+    assert ownership_diff_range("linear-head", branch="fix/lane-gate", upstream="origin/main") == "origin/main..HEAD"
+    assert ownership_diff_range("linear-head", branch="fix/lane-gate") == f"{BASE_COMMIT}..HEAD"
+
+
+def test_feature_branch_allows_owned_change_but_rejects_unauthorized_path():
+    """Feature-branch scope narrows the baseline, not the owned-file invariant."""
+    assert ownership_diff_range("linear-head", branch="fix/lane-gate", upstream="origin/main")
+    assert is_allowed_change("plugins/lane_gate/gate.py")
+    assert not is_allowed_change("README.md")
+
+
+def test_default_branch_sibling_slice_is_not_rechecked_as_lane_work():
+    """A merged default branch does not relitigate a sibling slice."""
+    assert ownership_diff_range("merge old-main resource-budget", branch="main") is None
 
 
 def test_ownership_allowlist_rejects_real_boundary_violation():
@@ -240,14 +252,15 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
         capture_output=True,
         check=False,
     ).returncode == 0 else None
-    diff_range = ownership_diff_range(parent_line, upstream=upstream)
+    branch = _git("symbolic-ref", "--short", "-q", "HEAD").strip() or None
+    diff_range = ownership_diff_range(parent_line, upstream=upstream, branch=branch)
     base_resolves = subprocess.run(
         ["git", "cat-file", "-e", f"{BASE_COMMIT}^{{commit}}"],
         cwd=str(REPO_ROOT),
         capture_output=True,
         check=False,
     ).returncode == 0
-    if base_resolves or diff_range != f"{BASE_COMMIT}..HEAD":
+    if diff_range is not None and (base_resolves or diff_range != f"{BASE_COMMIT}..HEAD"):
         changed.update(line.strip() for line in _git("diff", "--name-only", diff_range).splitlines() if line.strip())
     for line in _git("status", "--porcelain").splitlines():
         if not line.strip():
@@ -261,8 +274,9 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
         changed.add(path)
     stray = sorted(path for path in changed if not is_allowed_change(path))
     assert stray == [], f"diff escapes the owned file set: {stray}"
-    assert changed, "the branch has changes to check"
-    assert any(path.startswith(("plugins/lane_gate", "tests/lane_gate")) for path in changed)
+    if diff_range is not None:
+        assert changed, "the feature branch has changes to check"
+        assert any(path.startswith(("plugins/lane_gate", "tests/lane_gate")) for path in changed)
 
     # The generated-artifact filter must never be able to hide a source file.
     assert generated_artifacts_are_disjoint_from_owned()
