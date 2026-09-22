@@ -1,0 +1,8 @@
+name: lane-gate
+version: 0.1.0
+description: "Opt-in per-worker lane enforcement for Hermes. A lane manifest (owned write globs, forbidden globs, forbidden tools, external-write authorization) is checked at pre_tool_call before every tool runs, and every decision is written to an append-only hash-bound JSONL receipt ledger. Inert by default: with lane_gate.mode unset no hook is registered and nothing changes."
+author: "Mozi"
+license: MIT
+provides_hooks:
+  - pre_tool_call
+provides_tools: []
