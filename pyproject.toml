@@ -42,9 +42,10 @@ Source = "https://github.com/ahrazzle/protean-lcm"
 [project.entry-points."hermes_agent.plugins"]
 "protean-lcm" = "protean_lcm"
 "protean-lane-gate" = "protean_lane_gate"
+"protean-resource-budget" = "protean_resource_budget"
 
 [tool.setuptools]
-packages = ["protean_lcm", "protean_lane_gate"]
+packages = ["protean_lcm", "protean_lane_gate", "protean_resource_budget"]
 
 # The engine source lives at the repository's mirror of the in-tree plugin
 # path, so the same directory works as a directory plugin in a Hermes source
@@ -53,6 +54,7 @@ packages = ["protean_lcm", "protean_lane_gate"]
 [tool.setuptools.package-dir]
 protean_lcm = "plugins/context_engine/lcm"
 protean_lane_gate = "plugins/lane_gate"
+protean_resource_budget = "plugins/resource_budget"
 
 [tool.setuptools.package-data]
 protean_lcm = [
@@ -62,6 +64,10 @@ protean_lcm = [
 protean_lane_gate = [
   "plugin.yaml",
   "skills/lane-discipline/SKILL.md",
+]
+protean_resource_budget = [
+  "plugin.yaml",
+  "UPSTREAM-LICENSE.md",
 ]
 
 [tool.setuptools.exclude-package-data]
