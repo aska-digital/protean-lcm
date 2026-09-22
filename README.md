@@ -87,3 +87,47 @@ The script symlinks the checkout's context-engine loader into a temporary overla
 ## License
 
 MIT. See LICENSE. Upstream inspiration attributed above.
+
+## Resource budget (optional ingredient)
+
+`protean-resource-budget` is the third, independent entry point in this
+repository: an opt-in Hermes plugin that guards the native `terminal` tool
+against recognized host-heavy invocations (model pulls, container builds, bulk
+package upgrades, gateway restarts) using aggregate CPU, memory, I/O, and disk
+headroom. It is a vendored, hash-pinned copy of
+`keeltrace/hermesx-resource-budget` at commit `354deb3dc39ef1a39d294727742538da7afea499`
+(MIT) wrapped in a local adapter; the full provenance record is
+[`PROVENANCE-RESOURCE-BUDGET.md`](PROVENANCE-RESOURCE-BUDGET.md).
+
+From the source's own boundary statement, carried verbatim:
+
+> **Boundary:** this is a best-effort guard for the native Hermes `terminal`
+> tool. It is **not a sandbox or complete host-resource security boundary**.
+> The classifier recognizes a finite set of executable command forms;
+> unrecognized launchers or other execution surfaces can fall outside it. Its
+> shell grammar is intentionally **POSIX/Bash-oriented**; Windows PowerShell and
+> `cmd.exe` semantics are not modeled or claimed.
+
+Inert by default: unlike the upstream package, this slice registers nothing
+until you enable it and set a mode. With the plugin enabled, the mode setting
+decides what happens:
+
+```yaml
+plugins:
+  entries:
+    resource-budget:
+      settings:
+        mode: "off"   # off | observe | block_unattended | block_all | pressure_only
+```
+
+An unset or misspelled mode can only mean `off` or `observe`, never a blocking
+mode; the gate resolves the setting on every call. Invocations the classifier
+does not recognize are allowed, because Hermes owns human authorization for
+everything else and a local default-deny layer would duplicate that authority.
+
+Rollback: set `mode: "off"` (inert on the very next call), then
+`hermes plugins disable protean-resource-budget` to remove the hook and the
+read-only `resource_budget_status` tool. Nothing in Hermes core is touched, the
+slice writes no files, and its only state is three approximate telemetry keys
+that never drive a decision. See `tests/resource_budget/` for the executable
+proofs.
