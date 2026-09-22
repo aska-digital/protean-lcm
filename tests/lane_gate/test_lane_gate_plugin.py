@@ -115,6 +115,12 @@ def test_yaml_off_folding_stays_inert(monkeypatch):
     A naive string clamp would read ``False`` as an unrecognized value, clamp it
     to ``advisory``, register the hook and start writing receipts -- silently
     turning "off" into "on, recording".
+
+    The folding premise, the resolved mode and the inert registration are all
+    asserted through the pure config path, so this test is green on any supported
+    local environment.  The same inert property is then re-asserted through the
+    real ``hermes_cli.config`` loader when a Hermes checkout is importable; when it
+    is not, that half is skipped with a reason rather than failing the suite.
     """
     try:
         import yaml
@@ -127,16 +133,32 @@ def test_yaml_off_folding_stays_inert(monkeypatch):
     assert settings.mode == "off"
     assert settings.hook_active is False
 
-    stubbed = _stub_hermes_config(monkeypatch, folded)
-    assert stubbed, "the real Hermes config path is what is being exercised"
+    # ``true``/``on`` fold to True: recording is allowed, enforcement never is.
+    assert config.load_lane_gate_config({"lane_gate": {"mode": True}}).mode == "advisory"
+    assert config.load_lane_gate_config({"lane_gate": {"mode": False}}).mode == "off"
+
+    # Pure config path: registration fed with exactly the folded settings.
+    real_loader = config.load_lane_gate_config
+    monkeypatch.setattr(config, "load_lane_gate_config", lambda *a, **kw: settings)
     ctx = FakeCtx()
     lane_gate.register(ctx)
     assert ctx.pre_tool_call_hooks == [], "no hook for a user who switched the gate off"
     assert ctx.skills == []
+    monkeypatch.undo()
+    assert config.load_lane_gate_config is real_loader, "the pure assertions above used the real one"
 
-    # ``true``/``on`` fold to True: recording is allowed, enforcement never is.
-    assert config.load_lane_gate_config({"lane_gate": {"mode": True}}).mode == "advisory"
-    assert config.load_lane_gate_config({"lane_gate": {"mode": False}}).mode == "off"
+    # Real Hermes config path, when this environment has one.
+    if not _stub_hermes_config(monkeypatch, folded):
+        pytest.skip(
+            "hermes_cli.config is not importable in this environment (no Hermes checkout on "
+            "the path): the real-loader half of this test cannot run here. The YAML folding "
+            "premise, the resolved 'off' mode and the inert registration were still asserted "
+            "above through the pure config path."
+        )
+    real_ctx = FakeCtx()
+    lane_gate.register(real_ctx)
+    assert real_ctx.pre_tool_call_hooks == [], "the real loader must not register a hook either"
+    assert real_ctx.skills == []
 
 
 def test_config_fail_open_never_widens(monkeypatch):
