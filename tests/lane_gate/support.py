@@ -39,6 +39,8 @@ def ownership_diff_range(
     upstream: Optional[str] = None,
     branch: Optional[str] = None,
     default_branch: str = "main",
+    head: Optional[str] = None,
+    default_head: Optional[str] = None,
 ) -> Optional[str]:
     """Return the range containing this lane's changes.
 
@@ -49,7 +51,7 @@ def ownership_diff_range(
     checkout.  A merge commit on a feature branch is scoped to its first-parent
     delta.
     """
-    if branch == default_branch:
+    if branch == default_branch or (branch is None and head and default_head and head == default_head):
         return None
     if upstream:
         return f"{upstream}..HEAD"

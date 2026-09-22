@@ -233,6 +233,7 @@ def test_feature_branch_allows_owned_change_but_rejects_unauthorized_path():
 def test_default_branch_sibling_slice_is_not_rechecked_as_lane_work():
     """A merged default branch does not relitigate a sibling slice."""
     assert ownership_diff_range("merge old-main resource-budget", branch="main") is None
+    assert ownership_diff_range("merge old-main resource-budget", head="main-head", default_head="main-head") is None
 
 
 def test_ownership_allowlist_rejects_real_boundary_violation():
@@ -261,7 +262,11 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
     )
     assert branch_result.returncode in (0, 1), branch_result.stderr.strip()
     branch = branch_result.stdout.strip() or None
-    diff_range = ownership_diff_range(parent_line, upstream=upstream, branch=branch)
+    head = _git("rev-parse", "HEAD").strip()
+    default_head = _git("rev-parse", upstream).strip() if upstream else None
+    diff_range = ownership_diff_range(
+        parent_line, upstream=upstream, branch=branch, head=head, default_head=default_head
+    )
     base_resolves = subprocess.run(
         ["git", "cat-file", "-e", f"{BASE_COMMIT}^{{commit}}"],
         cwd=str(REPO_ROOT),
