@@ -221,7 +221,7 @@ def test_plugin_yaml_matches_the_lane_gate_shape():
         'privacy-preserving aggregate CPU, memory, I/O, and disk headroom for '
         'recognized host-heavy invocations."'
     )
-    assert lines[3] == 'author: "Mozi"'
+    assert lines[3] == 'author: "ASKA Digital"'
     assert lines[4] == "license: MIT"
     assert lines[5] == "provides_hooks:"
     assert lines[6] == "  - pre_tool_call"

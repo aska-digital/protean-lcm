@@ -20,7 +20,7 @@ set -eu
 PLUGIN=${PLUGIN:-protean-lcm}
 ENGINE=${ENGINE:-lcm}
 REF=${REF:-main}
-SRC=${SRC:-git+https://github.com/ahrazzle/protean-lcm.git@$REF}
+SRC=${SRC:-git+https://github.com/aska-digital/protean-lcm.git@$REF}
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }

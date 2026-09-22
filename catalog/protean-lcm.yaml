@@ -1,0 +1,32 @@
+# Draft catalog entry for this repository, in the field set and ordering of the live
+# aska-digital precedent entries (protean-model-sync, protean-subagent-viewer).
+#
+# DRAFT, NOT SUBMITTED. The entry is merged upstream as a new file at
+# `NousResearch/hermes-agent:plugin-catalog/protean-lcm.yaml`, by PR, only after the owner
+# authorizes that exact external write. `sha` and `version` below cannot be filled in before
+# the release is cut: the pin must be the 40-hex commit of the release tag, which does not
+# exist yet. Until then this file documents the field values and the wording.
+
+name: protean-lcm
+repo: https://github.com/aska-digital/protean-lcm
+sha: SET_AT_RELEASE_40_HEX_COMMIT_OF_THE_RELEASE_TAG
+subdir: plugins/context_engine/lcm
+description: "Opt-in LCM DAG context engine for Hermes Agent: compacts the middle of a long conversation into lineage-bearing summary nodes and keeps the raw messages recoverable through bounded recall pages. Disclosure — registers four agent tools (lcm_search, lcm_expand, lcm_page, lcm_status) through the context engine and stays fully inert until you set context.engine: lcm. Inspired by stephenschoettler/hermes-lcm (MIT), reimplemented with no copied code; see the repository's Provenance section. Not affiliated with Nous Research."
+maintainer: aska-digital
+tier: community
+category: memory
+requires_hermes: ">=0.21"
+docs_url: https://github.com/aska-digital/protean-lcm
+# Set to the release version at release time. The tree's current version is 0.1.0, and the
+# release that will carry the fixes above is the next one.
+version: "0.1.0"
+readme: true
+platforms: []
+capabilities:
+  # Empty by design: `register(ctx)` registers no tools, hooks or middleware. The four
+  # lcm_* tools are delivered by the context engine's get_tool_schemas() once the engine is
+  # selected, so they are named in the description rather than declared here.
+  provides_tools: []
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

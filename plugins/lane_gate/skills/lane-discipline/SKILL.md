@@ -2,7 +2,7 @@
 name: lane-discipline
 description: Use when a lane manifest is bound to your worker session (lane gate advisory or enforce). Explains what the lane owns, what a denial looks like, and how to cite lane receipts as evidence.
 version: 0.1.0
-author: Mozi
+author: ASKA Digital
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
@@ -20,7 +20,7 @@ are authorized to write off the machine.
 ```
 {
   "schema": "protean/lane-manifest/v1",
-  "lane_id": "mozi-nerve-build",
+  "lane_id": "lane-example-01",
   "owned_write_globs": ["/repo/tests/lane_gate/*", "/repo/plugins/lane_gate/*"],
   "forbidden_globs": ["/repo/protean-team/*", "/repo/LICENSE"],
   "forbidden_tools": ["delegate_task"],

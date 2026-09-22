@@ -6,7 +6,7 @@ The recall contract, stated once:
   takes the caller's session and searches *that* session.  There is no
   "search everything" flag here: broad cross-session history search is Hermes'
   ``session_search`` tool, and keeping the two surfaces distinct is the point
-  of the recall policy (see ``skills/hermes-lcm/references/recall-policy.md``).
+  of the recall policy (see ``skills/protean-lcm/references/recall-policy.md``).
 * **Every response is a page.**  A result list reports ``returned``,
   ``total``, ``page_size`` and ``has_more``. A node expansion reports the same
   over its lineage.  Message bodies are capped at ``body_chars``.

@@ -1,6 +1,13 @@
-name: lcm
+name: protean-lcm
 version: 0.1.0
 description: "Opt-in DAG-based context engine (Lossless Context Management). Compacts conversation ranges into lineage-bearing summary nodes and keeps the raw messages recoverable through bounded pages. Select with context.engine: lcm. Disabling it returns Hermes to the built-in compressor."
-author: "NousResearch"
+author: "ASKA Digital"
 license: MIT
 entry: register
+# Registration surface, declared explicitly. The four agent-facing tools this
+# plugin exposes (lcm_search, lcm_expand, lcm_page, lcm_status) are delivered by
+# the context engine's `get_tool_schemas()` once the engine is selected, not by
+# `register(ctx)` calls, so they belong in the catalog description rather than
+# here: declaring them here would misreport what `register(ctx)` registers.
+provides_tools: []
+provides_hooks: []
