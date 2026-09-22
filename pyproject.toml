@@ -35,23 +35,35 @@ Source = "https://github.com/ahrazzle/protean-lcm"
 # Hermes discovers installed plugins through this entry-point group. The target
 # is a module that exposes `register(ctx)` at module level, which is what the
 # host's plugin loader expects for a pip-distributed plugin.
+#
+# `protean-lane-gate` is the Lane Gate slice: a separate distribution entry point
+# from `protean-lcm` on purpose, so the gate and the context engine are enabled,
+# disabled and rolled back independently.
 [project.entry-points."hermes_agent.plugins"]
 "protean-lcm" = "protean_lcm"
+"protean-lane-gate" = "protean_lane_gate"
 
 [tool.setuptools]
-packages = ["protean_lcm"]
+packages = ["protean_lcm", "protean_lane_gate"]
 
 # The engine source lives at the repository's mirror of the in-tree plugin
 # path, so the same directory works as a directory plugin in a Hermes source
-# tree and as this distribution's `protean_lcm` package.
+# tree and as this distribution's `protean_lcm` package. The lane gate mirrors
+# that arrangement under `protean_lane_gate`.
 [tool.setuptools.package-dir]
 protean_lcm = "plugins/context_engine/lcm"
+protean_lane_gate = "plugins/lane_gate"
 
 [tool.setuptools.package-data]
 protean_lcm = [
   "skills/hermes-lcm/SKILL.md",
   "skills/hermes-lcm/references/*.md",
 ]
+protean_lane_gate = [
+  "plugin.yaml",
+  "skills/lane-discipline/SKILL.md",
+]
 
 [tool.setuptools.exclude-package-data]
 protean_lcm = ["__pycache__/*", "*.pyc"]
+protean_lane_gate = ["__pycache__/*", "*.pyc"]

@@ -1,0 +1,42 @@
+{
+  "contract_version": 1,
+  "task_id": "nerve-20260922",
+  "project": "protean-lcm",
+  "phase": "build",
+  "status": "completed",
+  "runtime_state": "local",
+  "last_stable_phase": "build",
+  "resume_phase": "verify",
+  "expected_artifacts": [
+    {"path": "/lane/plugins/lane_gate/gate.py", "kind": "file", "produced_by": "build"},
+    {"path": "/lane/plugins/lane_gate/manifest.py", "kind": "file", "produced_by": "build"},
+    {"path": "/lane/tests/lane_gate/test_lane_gate_gate.py", "kind": "file", "produced_by": "build"}
+  ],
+  "required_sections": [
+    {"artifact": "/lane/plugins/lane_gate/gate.py", "section": "Decision procedure", "marker": "def decide("}
+  ],
+  "size_bounds": [
+    {"artifact": "/lane/plugins/lane_gate/gate.py", "min_bytes": 1000, "max_bytes": 100000}
+  ],
+  "tests": [
+    {"name": "lane_gate_suite", "command": "python -m pytest tests/lane_gate"}
+  ],
+  "evidence_refs": [
+    {
+      "ref": "lane-receipt/v1 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef (write_file -> ALLOW/in_lane); proves: every write of this lane landed inside its owned globs",
+      "proves": "lane discipline held for the whole lane"
+    },
+    {
+      "ref": "git diff 9d3c4cb..HEAD --stat",
+      "proves": "the slice touched only its owned files"
+    }
+  ],
+  "feedback_to_apply": [],
+  "artifacts_to_regenerate": [
+    {"path": "/lane/plugins/lane_gate/gate.py"},
+    {"path": "/lane/tests/lane_gate/test_lane_gate_gate.py"}
+  ],
+  "artifacts_not_to_touch": [
+    {"path": "/lane/protean-team/choreography/artifact-contract.md"}
+  ]
+}
