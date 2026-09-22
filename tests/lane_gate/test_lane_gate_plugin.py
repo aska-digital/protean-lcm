@@ -252,7 +252,15 @@ def test_no_core_diff_and_rollback(lane_settings, monkeypatch, tmp_path):
         capture_output=True,
         check=False,
     ).returncode == 0 else None
-    branch = _git("symbolic-ref", "--short", "-q", "HEAD").strip() or None
+    branch_result = subprocess.run(
+        ["git", "symbolic-ref", "--short", "-q", "HEAD"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert branch_result.returncode in (0, 1), branch_result.stderr.strip()
+    branch = branch_result.stdout.strip() or None
     diff_range = ownership_diff_range(parent_line, upstream=upstream, branch=branch)
     base_resolves = subprocess.run(
         ["git", "cat-file", "-e", f"{BASE_COMMIT}^{{commit}}"],
