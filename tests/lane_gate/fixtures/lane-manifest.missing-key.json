@@ -1,9 +1,0 @@
-{
-  "schema": "protean/lane-manifest/v1",
-  "lane_id": "mozi-nerve-lane-gate",
-  "owned_write_globs": [
-    "/lane/plugins/lane_gate/*"
-  ],
-  "forbidden_globs": [],
-  "external_writes": false
-}

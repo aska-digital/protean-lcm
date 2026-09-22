@@ -1,9 +1,0 @@
-name: resource-budget
-version: 0.1.0
-description: "Best-effort Hermes terminal policy guard with privacy-preserving aggregate CPU, memory, I/O, and disk headroom for recognized host-heavy invocations."
-author: "ASKA Digital"
-license: MIT
-provides_hooks:
-  - pre_tool_call
-provides_tools:
-  - resource_budget_status
