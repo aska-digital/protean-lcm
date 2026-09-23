@@ -7,10 +7,10 @@ name = "protean-lcm"
 version = "0.1.0"
 description = "Opt-in DAG context engine (Lossless Context Management) plugin for Hermes Agent. Compacts a conversation range into a lineage-bearing summary node and keeps the raw messages recoverable through bounded pages."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.14"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Mozi", email = "mozi@askaconsult.com" }]
+authors = [{ name = "ASKA Digital", email = "info@askaconsult.com" }]
 keywords = [
   "hermes-agent",
   "plugin",
@@ -22,54 +22,43 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries",
 ]
 
 [project.urls]
-Homepage = "https://github.com/ahrazzle/protean-lcm"
-Source = "https://github.com/ahrazzle/protean-lcm"
+Homepage = "https://github.com/aska-digital/protean-lcm"
+Source = "https://github.com/aska-digital/protean-lcm"
 
 # Hermes discovers installed plugins through this entry-point group. The target
 # is a module that exposes `register(ctx)` at module level, which is what the
 # host's plugin loader expects for a pip-distributed plugin.
 #
-# `protean-lane-gate` is the Lane Gate slice: a separate distribution entry point
-# from `protean-lcm` on purpose, so the gate and the context engine are enabled,
-# disabled and rolled back independently.
+# One distribution = one entry point = one manifest = one plugin. This
+# distribution ships the LCM context engine and nothing else, so the plugin
+# carries the same name on every install path: this entry point, the `name:`
+# field in `plugins/context_engine/lcm/plugin.yaml`, and the catalog entry that
+# pins this tree.
 [project.entry-points."hermes_agent.plugins"]
 "protean-lcm" = "protean_lcm"
-"protean-lane-gate" = "protean_lane_gate"
-"protean-resource-budget" = "protean_resource_budget"
 
 [tool.setuptools]
-packages = ["protean_lcm", "protean_lane_gate", "protean_resource_budget"]
+packages = ["protean_lcm"]
 
 # The engine source lives at the repository's mirror of the in-tree plugin
 # path, so the same directory works as a directory plugin in a Hermes source
-# tree and as this distribution's `protean_lcm` package. The lane gate mirrors
-# that arrangement under `protean_lane_gate`.
+# tree and as this distribution's `protean_lcm` package.
 [tool.setuptools.package-dir]
 protean_lcm = "plugins/context_engine/lcm"
-protean_lane_gate = "plugins/lane_gate"
-protean_resource_budget = "plugins/resource_budget"
 
 [tool.setuptools.package-data]
 protean_lcm = [
-  "skills/hermes-lcm/SKILL.md",
-  "skills/hermes-lcm/references/*.md",
-]
-protean_lane_gate = [
   "plugin.yaml",
-  "skills/lane-discipline/SKILL.md",
-]
-protean_resource_budget = [
-  "plugin.yaml",
-  "UPSTREAM-LICENSE.md",
+  "skills/protean-lcm/SKILL.md",
+  "skills/protean-lcm/references/*.md",
 ]
 
 [tool.setuptools.exclude-package-data]
 protean_lcm = ["__pycache__/*", "*.pyc"]
-protean_lane_gate = ["__pycache__/*", "*.pyc"]

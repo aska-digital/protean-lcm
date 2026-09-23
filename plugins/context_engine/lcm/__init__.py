@@ -9,9 +9,9 @@ Layout
     ├── compaction.py   DAG compaction + deterministic digest rendering
     ├── recall.py       bounded recall (search / expand / page / status)
     ├── config.py       ``context.lcm`` settings with hard ceilings
-    └── skills/hermes-lcm/   the recall skill and its policy references
+    └── skills/protean-lcm/   the recall skill and its policy references
 
-Why the engine lives here rather than under ``plugins/hermes-lcm/``: the host
+Why the engine lives here rather than under ``plugins/protean-lcm/``: the host
 discovers always-available engines by scanning ``plugins/context_engine/<name>/``
 (``plugins/context_engine/__init__.py``, and the developer-guide contract
 "place your engine in ``plugins/context_engine/<name>/``").  The general plugin
@@ -37,7 +37,7 @@ from .engine import ENGINE_NAME, LCMEngine, build_engine
 
 __all__ = ["ENGINE_NAME", "LCMEngine", "build_engine", "register"]
 
-_SKILL_PATH = Path(__file__).resolve().parent / "skills" / "hermes-lcm" / "SKILL.md"
+_SKILL_PATH = Path(__file__).resolve().parent / "skills" / "protean-lcm" / "SKILL.md"
 
 _COMMAND_HELP = (
     "LCM context engine. Usage: /lcm status | /lcm search <query> | "

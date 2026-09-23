@@ -36,12 +36,12 @@ chain of copies.
 | `compaction.py` | DAG compaction and the deterministic digest |
 | `recall.py` | bounded recall: `search` / `expand` / `page` / `status` |
 | `config.py` | `context.lcm` settings with hard ceilings |
-| `skills/hermes-lcm/` | the recall skill and its policy references |
+| `skills/protean-lcm/` | the recall skill and its policy references |
 
 ## Agent-facing tools
 
 `lcm_search`, `lcm_expand`, `lcm_page`, `lcm_status`. See
-`skills/hermes-lcm/references/recall-tools.md` for arguments and response
+`skills/protean-lcm/references/recall-tools.md` for arguments and response
 shapes, and `recall-policy.md` for why recall is session-scoped.
 
 ## Bounds are contractual
