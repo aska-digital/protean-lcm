@@ -114,8 +114,9 @@ $ sh scripts/run_tests.sh "$HERMES_CHECKOUT" -q
 ```
 
 The suite runs against the real context-engine loader of the Hermes checkout passed to the script.
-Its scope is `tests/plugins/context_engine/`; the unpackaged slices' suites are not covered by this
-command. The warnings come from the host checkout's own plugin-compat notices (the Sep 2026
+Its scope is `tests/plugins/context_engine/`; the lane-gate and resource-budget
+suites were removed from the tree on this branch (see `MIGRATION-RECEIPT.md`)
+and are not covered by this command. The warnings come from the host checkout's own plugin-compat notices (the Sep 2026
 `run_agent.*` import move), not from this plugin, and their count moves between runs (3 or 4 on this
 host).
 

@@ -2,7 +2,7 @@
 
 Date: 2026-09-22 (UTC). Implementer: mozi (stage 4, implementation).
 Branch: `fix/lcm-public-distribution` (PR #10 head, base `main`).
-Prior head: `dad94ed54cad56f0b81d886c178325e78091331e42`.
+Prior head: `dad94ed54cad56f0b81d886c178325e78091331e`.
 
 ## What this commit does
 
@@ -16,9 +16,10 @@ the distribution ships the LCM context engine only:
 Adds this receipt. No other path is touched: `README.md`, `CHANGELOG.md`,
 `INSTALL-PROOF.md`, `catalog/`, `install.sh`, `pyproject.toml`,
 `plugins/context_engine/**`, `tests/plugins/**`, and `tests/conftest.py` are
-byte-identical to the prior head. (Stale mentions of the removed slices may
-remain in `README.md`/`CHANGELOG.md`/`INSTALL-PROOF.md`; updating them is a
-follow-up docs decision, deliberately out of this commit's owned set.)
+byte-identical to the prior head. (The removal commit deliberately left
+`README.md`/`CHANGELOG.md`/`INSTALL-PROOF.md` untouched; the correction
+commit on this branch updates those three files so they no longer describe
+the removed slices as present.)
 
 ## Where the lane gate went
 
