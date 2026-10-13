@@ -73,3 +73,8 @@ See `tests/plugins/context_engine/test_lcm_rollback.py`.
 - **No `select_context()` replacement.** Per-turn context rewriting would
   change the prompt-cache prefix every turn. Recall is an explicit tool call
   instead, so installing the engine does not by itself alter caching.
+
+Schema v3 repairs search-index gaps left by the original v1-to-v2 migration.
+Opening an existing v1 or v2 store indexes its retained messages without
+changing raw payloads or duplicating valid search rows. The repair and schema
+version update commit atomically and run once during the version transition.
