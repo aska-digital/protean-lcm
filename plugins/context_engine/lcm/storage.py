@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # ---------------------------------------------------------------------------
 # Schema
@@ -101,7 +101,19 @@ def _migrate_to_2(conn: sqlite3.Connection) -> None:
         conn.execute(statement)
 
 
-_MIGRATIONS = {1: _migrate_to_1, 2: _migrate_to_2}
+def _migrate_to_3(conn: sqlite3.Connection) -> None:
+    """v3: index retained rows missed by the original v1-to-v2 migration."""
+    # Run once at the version transition, including databases already at v2.
+    # Preserve valid index rows and raw payloads while filling missing keys.
+    conn.execute(
+        "INSERT INTO messages_fts (session_id, message_id, body) "
+        "SELECT m.session_id, m.message_id, m.body FROM messages m "
+        "WHERE (m.session_id, m.message_id) NOT IN "
+        "(SELECT session_id, message_id FROM messages_fts)"
+    )
+
+
+_MIGRATIONS = {1: _migrate_to_1, 2: _migrate_to_2, 3: _migrate_to_3}
 
 
 def schema_version(conn: sqlite3.Connection) -> int:
@@ -127,16 +139,26 @@ def migrate(conn: sqlite3.Connection) -> int:
     a no-op and a partially-migrated one resumes where it stopped.  Existing
     rows are never touched. A v1 database keeps every message and node.
     """
-    conn.execute(_SCHEMA_META)
-    current = schema_version(conn)
-    while current < SCHEMA_VERSION:
-        _MIGRATIONS[current + 1](conn)
-        current += 1
-    conn.execute(
-        "INSERT INTO schema_meta (key, value) VALUES ('schema_version', ?) "
-        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        (str(current),),
-    )
+    # SQLite DDL is not covered by Python's implicit DML transactions.
+    # A savepoint makes schema creation, backfill and version publication
+    # atomic, while preserving any transaction owned by the caller.
+    conn.execute("SAVEPOINT lcm_schema_migration")
+    try:
+        conn.execute(_SCHEMA_META)
+        current = schema_version(conn)
+        while current < SCHEMA_VERSION:
+            _MIGRATIONS[current + 1](conn)
+            current += 1
+        conn.execute(
+            "INSERT INTO schema_meta (key, value) VALUES ('schema_version', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (str(current),),
+        )
+    except BaseException:
+        conn.execute("ROLLBACK TO lcm_schema_migration")
+        conn.execute("RELEASE lcm_schema_migration")
+        raise
+    conn.execute("RELEASE lcm_schema_migration")
     return current
 
 
