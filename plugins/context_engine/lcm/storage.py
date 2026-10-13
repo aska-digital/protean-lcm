@@ -742,6 +742,12 @@ def backup_db(db_path: Path, dest: Optional[Path] = None) -> Path:
         stamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
         dest = db_path.with_name(f"{db_path.stem}.backup-{stamp}.db")
     dest = Path(dest)
+    # Check before unlinking an existing destination. Lexical comparison
+    # misses relative paths, symlinked directories and hard-link aliases.
+    if dest.resolve() == db_path.resolve() or (
+        dest.exists() and dest.samefile(db_path)
+    ):
+        raise ValueError("backup destination must not refer to the source database")
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         dest.unlink()
