@@ -318,6 +318,52 @@ class LCMStore:
             ).fetchall()
         return [(row["message_id"], row["payload"]) for row in reversed(rows)]
 
+    def _align_compacted_transcript(self, conn, session_id, messages, payloads):
+        """Resolve surviving raw positions and append only the new tail.
+
+        A summary's lineage supplies the sequence watermark even when no raw
+        tail was protected. This also distinguishes a repeated new message
+        from an identical message already absorbed by that summary.
+        """
+        ids = ["" for _ in messages]
+        pending = []
+        after_seq = 0
+        for index, (message, payload) in enumerate(zip(messages, payloads)):
+            if message.get("_lcm_summary"):
+                node_id = message.get("_lcm_node_id")
+                node = conn.execute(
+                    "SELECT node_id FROM nodes WHERE node_id = ? AND session_id = ?",
+                    (node_id, session_id),
+                ).fetchone()
+                if node is None:
+                    raise ValueError("unknown summary node for this session")
+                row = conn.execute(
+                    "WITH RECURSIVE lineage(node_id) AS ("
+                    "SELECT node_id FROM nodes WHERE node_id = ? AND session_id = ? "
+                    "UNION SELECT child.node_id FROM lineage l "
+                    "JOIN node_sources ns ON ns.node_id = l.node_id "
+                    "JOIN nodes child ON child.node_id = ns.source_id "
+                    "WHERE ns.source_kind = 'node' AND child.session_id = ?) "
+                    "SELECT MAX(m.seq) AS seq FROM lineage l "
+                    "JOIN node_sources ns ON ns.node_id = l.node_id "
+                    "JOIN messages m ON m.message_id = ns.source_id "
+                    "WHERE ns.source_kind = 'message' AND m.session_id = ?",
+                    (node_id, session_id, session_id, session_id),
+                ).fetchone()
+                after_seq = max(after_seq, int(row["seq"] or 0))
+                continue
+            row = conn.execute(
+                "SELECT seq, message_id FROM messages "
+                "WHERE session_id = ? AND seq > ? AND payload = ? ORDER BY seq LIMIT 1",
+                (session_id, after_seq, payload),
+            ).fetchone()
+            if row is not None and not pending:
+                ids[index] = row["message_id"]
+                after_seq = int(row["seq"])
+            else:
+                pending.append(index)
+        return ids, pending
+
     def sync_transcript(
         self, session_id: str, messages: List[Dict[str, Any]]
     ) -> List[str]:
@@ -331,11 +377,11 @@ class LCMStore:
         was appended by this call. That is what lets compaction cite exact
         lineage for the range it absorbs.
 
-        A compacted transcript (whose middle was replaced by a summary message
-        this engine wrote so long before that no overlap remains) contributes
-        nothing: the pre-compaction originals were already recorded, so
-        returning "nothing new" is the safe direction.  Unresolvable positions
-        come back as an empty string.
+        For an LCM-compacted transcript, resolve surviving positions in order
+        using each summary node's lineage as a sequence watermark, then append
+        the new tail. Summary markers return an empty string: compaction cites
+        their node directly rather than treating the digest as a raw message.
+        Unrecognised rewrites retain the conservative membership fallback.
         """
         if not messages:
             return []
@@ -345,9 +391,10 @@ class LCMStore:
         payloads = [_canonical(m) for m in messages]
         with self._cursor() as conn:
             stored = self._tail_rows(session_id, limit=len(payloads))
+            compacted = any(message.get("_lcm_summary") for message in messages)
 
             overlap = 0
-            if stored:
+            if stored and not compacted:
                 upper = min(len(stored), len(payloads))
                 for k in range(upper, 0, -1):
                     if [p for _mid, p in stored[len(stored) - k:]] == payloads[:k]:
@@ -378,12 +425,18 @@ class LCMStore:
                         return ["" for _ in messages]
 
             ids: List[str] = [""] * len(messages)
-            for index in range(overlap):
-                ids[index] = stored[len(stored) - overlap + index][0]
+            pending = list(range(overlap, len(messages)))
+            if compacted:
+                ids, pending = self._align_compacted_transcript(
+                    conn, session_id, messages, payloads
+                )
+            else:
+                for index in range(overlap):
+                    ids[index] = stored[len(stored) - overlap + index][0]
 
             seq = self.max_seq(session_id)
             now = time.time()
-            for index in range(overlap, len(messages)):
+            for index in pending:
                 seq += 1
                 message = messages[index]
                 payload = payloads[index]
